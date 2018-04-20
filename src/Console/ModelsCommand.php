@@ -195,21 +195,23 @@ class ModelsCommand extends Command
                         continue;
                     }
 
-                    $model = $this->laravel->make($name);
+                    if ($model = $this->laravel->make($name)) {
+	                    if ($hasDoctrine) {
+		                    $this->getPropertiesFromTable($model);
+	                    }
 
-                    if ($hasDoctrine) {
-                        $this->getPropertiesFromTable($model);
+	                    if (method_exists($model, 'getCasts')) {
+		                    $this->castPropertiesType($model);
+	                    }
+
+	                    $this->getPropertiesFromMethods($model);
+	                    $this->getSoftDeleteMethods($model);
+	                    $output                .= $this->createPhpDocs($name);
+	                    $ignore[]              = $name;
+	                    $this->nullableColumns = [];
                     }
 
-                    if (method_exists($model, 'getCasts')) {
-                        $this->castPropertiesType($model);
-                    }
 
-                    $this->getPropertiesFromMethods($model);
-                    $this->getSoftDeleteMethods($model);
-                    $output                .= $this->createPhpDocs($name);
-                    $ignore[]              = $name;
-                    $this->nullableColumns = [];
                 } catch (\Exception $e) {
                     $this->error("Exception: " . $e->getMessage() . "\nCould not analyze class $name.");
                 }
